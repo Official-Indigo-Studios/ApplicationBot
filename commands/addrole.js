@@ -20,6 +20,13 @@ module.exports = {
                     }
                     var app = appManager.getApp(message.guild, name, type);
                     appManager.addAuthorisedRole(app, role);
+                    // is an app
+                    if (!type) {
+                        app.submission_channel.overwritePermissions([{
+                            id: role,
+                            allow: ['VIEW_CHANNEL', 'SEND_MESSAGES', 'READ_MESSAGE_HISTORY']
+                        }]);
+                    }
                     message.reply('Role added to app');
                 } else {
                     message.reply(`Invalid role ${role} given.`);
