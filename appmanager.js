@@ -15,11 +15,11 @@ module.exports = {
     getApp(guild, name, isTicket) {
         return this.getApps(guild).find((value) => {
             if (isTicket) {
-                if (value.type == 'ticket') {
+                if (value.type === 'ticket') {
                     return value.name == name;
                 }
             } else {
-                if (value.type != 'ticket') {
+                if (value.type !== 'ticket') {
                     return value.name == name;
                 }
             }
@@ -61,6 +61,14 @@ module.exports = {
                 return true;
             }
         });
+    },
+
+    addAuthorisedRole(app, role) {
+        if (app.roles != undefined) {
+            app.roles.push(role);
+        } else {
+            app.roles = {role};
+        }
     },
 
     startApp(applicant, application) {
