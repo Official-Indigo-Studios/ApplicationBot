@@ -67,7 +67,7 @@ module.exports = {
         if (app.roles != undefined) {
             app.roles.push(role);
         } else {
-            app.roles = {role};
+            app.roles = [role];
         }
     },
 
@@ -125,7 +125,18 @@ module.exports = {
                     }
                 }, -1);
                 id = id + 1;
-                var channel = openApp.app.submission_channel.guild.channels.create(`${id}`, {parent: openApp.app.submission_channel});
+                var perms;
+                if (openApp.app.roles != undefined) {
+                    perms = openApp.app.roles.map((value) => {
+                        return {id: value.id,
+                                allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
+                                }
+                    });
+                }
+                var channel = openApp.app.submission_channel.guild.channels.create(`${id}`, {
+                    parent: openApp.app.submission_channel,
+                    permissionOverwrites: perms
+                });
                 channel.then((channel) => {
                     openApp.channel = channel;
                     openApp.id = id;

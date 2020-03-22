@@ -7,15 +7,22 @@ module.exports = {
 
     execute(message, args) {
         if (args.length >= 3) {
-            var category = args[1];
-            if (isValidCategory(category)) {
+            var categoryName = args[1];
+            categoryName = categoryName.replace('_', ' ');
+            if (isValidCategory(categoryName)) {
                 var name = args.shift();
-                category = client.channels.cache.get(args.shift());
+                var category = client.channels.cache.get(args.shift());
+                if (category == undefined) {
+                    category = message.guild.channels.cache.find((channel) => {
+                        return channel instanceof discord.CategoryChannel && channel.name === categoryName;
+                    });
+                }
+                console.log(category);
                 appManager.buildApp(name, category, getQuestionsArray(args), true);
                 message.channel.send(`Created ticket successfully.`);
             } else {
                 // Invalid submission channel
-                message.reply(`${category} is not a valid category ID!`);
+                message.reply(`${categoryName} is not a valid category name or ID!`);
             }
         } else {
             message.reply('there are not enough arguments! Make sure you are writing in the format name, category ID, questions');
@@ -23,7 +30,17 @@ module.exports = {
 
         function isValidCategory(categoryID) {
             var channel = message.guild.channels.cache.get(categoryID);
+            if (channel == undefined) {
+                channel = message.guild.channels.cache.find((channel) => {
+                    console.log(channel.name);
+                    return channel instanceof discord.CategoryChannel && channel.name === categoryID;
+                });
+            }
             return channel != undefined && channel instanceof discord.CategoryChannel;
+        }
+
+        function isID(categoryString) {
+            return categoryString.match(discord.MessageMentions.CHANNELS_PATTERN);
         }
 
         function getQuestionsArray(fromArgs) {
