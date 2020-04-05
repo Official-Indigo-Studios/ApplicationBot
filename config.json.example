@@ -1,4 +1,9 @@
 {
     "prefix": "!",
     "token": "SampleTokenHere"
+    "database": {
+        "host": "localhost",
+        "username": "username",
+        "password": "password"
+    }
 }

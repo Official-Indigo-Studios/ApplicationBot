@@ -1,4 +1,5 @@
-const { client, discord } = require('./index.js');
+const { client, discord, config } = require('./index.js');
+const mysql = require('mysql');
 
 // Maps guild to list of application that the guild has
 client.apps = new discord.Collection();
@@ -175,6 +176,10 @@ module.exports = {
     },
 
     load() {
-
+        var connection = mysql.createConnection(config.database);
+        connection.connect((error) => {
+            if (error) throw error;
+            console.log('Connected!');
+        })
     }
 }

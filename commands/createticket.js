@@ -17,7 +17,6 @@ module.exports = {
                         return channel instanceof discord.CategoryChannel && channel.name === categoryName;
                     });
                 }
-                console.log(category);
                 appManager.buildApp(name, category, getQuestionsArray(args), true);
                 message.channel.send(`Created ticket successfully.`);
             } else {
