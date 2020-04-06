@@ -1,6 +1,5 @@
-const { client, discord, config } = require('./index.js');
-const mysql = require('mysql');
-
+const { client, discord } = require('./index.js');
+const database = require('./database.js');
 // Maps guild to list of application that the guild has
 client.apps = new discord.Collection();
 // Maps a Discord user to their app response. They can only work on one app at a time
@@ -166,6 +165,7 @@ module.exports = {
         if (isTicket) {
             app.type = 'ticket';
         }
+        // adding app to the right guild
         if (client.apps.has(submissionChannel.guild)) {
             var apps = this.getApps(submissionChannel.guild);
             apps[apps.length] = app;
@@ -173,13 +173,6 @@ module.exports = {
         } else {
             client.apps.set(submissionChannel.guild, [app]);
         }
-    },
-
-    load() {
-        var connection = mysql.createConnection(config.database);
-        connection.connect((error) => {
-            if (error) throw error;
-            console.log('Connected!');
-        })
+        database.add(app);
     }
 }

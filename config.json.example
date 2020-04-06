@@ -3,7 +3,8 @@
     "token": "SampleTokenHere"
     "database": {
         "host": "localhost",
-        "username": "username",
-        "password": "password"
+        "user": "username",
+        "password": "password",
+        "database": "database"
     }
 }

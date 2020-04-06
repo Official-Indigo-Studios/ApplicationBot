@@ -13,7 +13,7 @@ exports.responses = client.responses;
 exports.config = config;
 
 const reply = require('./appreplying.js');
-const appManager = require('./appmanager.js');
+const database = require('./database.js');
 
 // get all command files in the commands folder and remove anything that isn't a JavaScript file
 const cmdFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -51,7 +51,7 @@ client.on('message', message => {
 
 client.once('ready', () => {
     console.log('Ready!');
-    appManager.load();
+    database.load();
 });
 
 client.login(config.token);
