@@ -156,7 +156,7 @@ module.exports = {
         client.ticketResponses.delete(applicant);
     },
 
-    buildApp(name, submissionChannel, questions, isTicket) {
+    buildApp(name, submissionChannel, questions, isTicket, addToDB) {
         var app = {
             name: name,
             submission_channel: submissionChannel,
@@ -173,6 +173,15 @@ module.exports = {
         } else {
             client.apps.set(submissionChannel.guild, [app]);
         }
-        database.add(app);
+        if (addToDB) {
+            database.add(app);
+        }
+    },
+
+    deleteApp(app) {
+        var appArray = this.getApps(app.submissionChannel.guild);
+        var index = appArray.indexOf(app);
+        appArray = appArray.splice(index, 1);
+        client.apps.set(submissionChannel.guild, appArray);
     }
 }

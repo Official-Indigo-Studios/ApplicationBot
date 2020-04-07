@@ -11,7 +11,7 @@ module.exports = {
             if (isValidChannel(getChannelID(channel))) {
                 var name = args.shift();
                 channel = client.channels.cache.get(getChannelID(args.shift()));
-                appManager.buildApp(name, channel, getQuestionsArray(args), false);
+                appManager.buildApp(name, channel, getQuestionsArray(args), false, true);
                 message.channel.send(`Created application successfully.`);
             } else {
                 // Invalid submission channel
