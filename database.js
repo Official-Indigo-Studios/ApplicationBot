@@ -55,7 +55,7 @@ module.exports = {
             if (app.type === 'ticket') {
                 isTicket = 1;
             }
-            var sql = `DELETE FROM ${appTable} WHERE name = '${app.name}' AND ${isTicket} AND guild_id = ${app.submission_channel.guild.id}`;
+            var sql = `DELETE FROM ${appTable} WHERE name = '${app.name}' AND is_ticket = ${isTicket} AND guild_id = '${app.submission_channel.guild.id}'`;
             connection.query(sql, (err, result) => {
                 if (err) throw err;
 

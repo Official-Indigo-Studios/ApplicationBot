@@ -178,10 +178,14 @@ module.exports = {
         }
     },
 
-    deleteApp(app) {
-        var appArray = this.getApps(app.submissionChannel.guild);
+    deleteApp(app, fromDB) {
+        var guild = app.submission_channel.guild;
+        var appArray = this.getApps(guild);
         var index = appArray.indexOf(app);
-        appArray = appArray.splice(index, 1);
-        client.apps.set(submissionChannel.guild, appArray);
+        appArray.splice(index, 1);
+        client.apps.set(guild, appArray);
+        if (fromDB) {
+            database.delete(app);
+        }
     }
 }

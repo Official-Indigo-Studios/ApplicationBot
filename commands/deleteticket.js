@@ -1,15 +1,15 @@
 const appManager = require('../appmanager.js');
 
 module.exports = {
-    name: 'deleteapp',
-    description: 'Delete an application so people can no longer apply for it',
+    name: 'deleteticket',
+    description: 'Delete a ticket so that users may no longer open this kind of ticket',
 
     execute(message, args) {
         if (args.length >= 1) {
             var name = args.shift();
-            var app = appManager.getApp(message.guild, name, false);
+            var app = appManager.getApp(message.guild, name, true);
             appManager.deleteApp(app, true);
-            message.reply('app deleted');
+            message.reply('ticket deleted');
         }
     }
 }
