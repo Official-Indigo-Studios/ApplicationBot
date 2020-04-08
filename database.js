@@ -1,6 +1,7 @@
 const { discord, config } = require('./index.js');
 const mysql = require('mysql');
 const appTable = 'applications';
+const responseTable = 'responses';
 
 module.exports = {
     load() {
@@ -60,6 +61,55 @@ module.exports = {
                 if (err) throw err;
 
                 console.log('Record removed.');
+            });
+        });
+    },
+
+    saveResponses(response, status) {
+        var connection = mysql.createConnection(config.database);
+        connection.connect((error) => {
+            if (error) throw error;
+
+            var appManager = require('./appmanager.js');
+            var { client } = require('./index.js');
+
+            var applicantID = appManager.getOwner(response).id;
+            var responses = response.responses.join('|');
+            var isTicket = 0;
+            if (response.app.type === 'ticket') {
+                isTicket = 1;
+            }
+            var sql = `SELECT id FROM ${appTable} WHERE name = '${response.app.name}' AND channel_id = '${response.app.submission_channel.id}' AND is_ticket = ${isTicket}`;
+            connection.query(sql, (error, result) => {
+                if (error) throw error;
+
+                var appID = result[0].id;
+                sql = `INSERT INTO ${responseTable} (user_id, app_id, responses, status) VALUES ('${applicantID}', ${appID}, '${responses}', ${status})`;
+                connection.query(sql, (error, result) => {
+                    if (error) throw error;
+
+                    console.log('Response saved.');
+                });
+            });
+        });
+    },
+
+    loadResponse(userID, guildID, appName, isTicket) {
+        var connection = mysql.createConnection(config.database);
+        connection.connect((error) => {
+            if (error) throw error;
+
+            var sql = `SELECT id FROM ${appTable} WHERE name = '${appName}' AND guild_id = '${guildID}' AND is_ticket = ${isTicket}`;
+            connection.query(sql, (error, result) => {
+                if (error) throw error;
+
+                var appID = result[0].id;
+                sql = `SELECT responses FROM ${responseTable} WHERE user_id = '${userID}' AND app_id = ${appID}`;
+                connection.query(sql, (error, result) => {
+                    if (error) throw error;
+
+                    console.log(result[0].responses);
+                });
             });
         });
     }

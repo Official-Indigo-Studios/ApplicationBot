@@ -108,6 +108,7 @@ module.exports = {
     finishApp(applicant, sendIn, isTicket) {
         if (sendIn) {
             var openApp = this.getOpenApp(applicant, isTicket);
+            database.saveResponses(openApp, 1);
             if (!isTicket) {
                 var formattedResponses = openApp.responses.map((value, index) => {
                     return `**${openApp.app.questions[index]}**: ${value}`;
