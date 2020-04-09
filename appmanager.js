@@ -114,7 +114,19 @@ module.exports = {
                     return `**${openApp.app.questions[index]}**: ${value}`;
                 });
                 formattedResponses.unshift(`**Discord**: ${this.getOwner(openApp)}`);
-                openApp.app.submission_channel.send(formattedResponses);
+                openApp.app.submission_channel.send(formattedResponses).then(message => {
+                    var filter = (reaction, user) => {
+                        return reaction.emoji.name === '✅' || reaction.emoji.name === '❌';
+                    }
+                    message.awaitReactions(filter, {max: 1}).then(collected => {
+                        var emoji = collected.first().reaction.emoji.name;
+                        if (emoji === '✅') {
+                            console.log('app accepted');
+                        } else {
+                            console.log('app denied');
+                        }
+                    });
+                });
             } else {
                 var id = client.ticketResponses.reduce((accumulator, currentValue) => {
                     if (currentValue.id != undefined) {

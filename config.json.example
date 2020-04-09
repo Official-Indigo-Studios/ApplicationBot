@@ -1,6 +1,6 @@
 {
     "prefix": "!",
-    "token": "SampleTokenHere"
+    "token": "SampleTokenHere",
     "database": {
         "host": "localhost",
         "user": "username",
