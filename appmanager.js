@@ -119,11 +119,13 @@ module.exports = {
                         return reaction.emoji.name === '✅' || reaction.emoji.name === '❌';
                     }
                     message.awaitReactions(filter, {max: 1}).then(collected => {
-                        var emoji = collected.first().reaction.emoji.name;
+                        var emoji = collected.first().emoji.name;
                         if (emoji === '✅') {
-                            console.log('app accepted');
+                            applicant.send(`Congratulations, your application **${openApp.app.name}** has been accepted! Please contact an appropriate user to continue.`)
+                                .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
                         } else {
-                            console.log('app denied');
+                            applicant.send(`Unfortunately, your application **${openApp.app.name}** has been denied.`)
+                                .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
                         }
                     });
                 });
