@@ -120,12 +120,22 @@ module.exports = {
                     }
                     message.awaitReactions(filter, {max: 1}).then(collected => {
                         var emoji = collected.first().emoji.name;
+                        var dbApp = openApp;
                         if (emoji === '✅') {
+                            database.setResponseStatus(dbApp, 2);
                             applicant.send(`Congratulations, your application **${openApp.app.name}** has been accepted! Please contact an appropriate user to continue.`)
                                 .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
                         } else {
+                            database.setResponseStatus(dbApp, 3);
                             applicant.send(`Unfortunately, your application **${openApp.app.name}** has been denied.`)
                                 .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
+                        }
+                        
+                        //TODO: find out why this runs before the db stuff and makes the app be undefined for db
+                        if (openApp.app.type === 'ticket') {
+                            client.ticketResponses.delete(applicant);
+                        } else {
+                            client.responses.delete(applicant);
                         }
                     });
                 });

@@ -112,5 +112,29 @@ module.exports = {
                 });
             });
         });
+    },
+
+    setResponseStatus(openApp, status) {
+        var connection = mysql.createConnection(config.database);
+        connection.connect((error) => {
+            if (error) throw error;
+
+            var isTicket = 0;
+            if (openApp.app.type === 'ticket') {
+                isTicket = 1;
+            }
+            var sql = `SELECT id FROM ${appTable} WHERE name = '${openApp.app.name}' AND channel_id = '${openApp.app.submission_channel.id}' AND is_ticket = ${isTicket}`;
+            connection.query(sql, (error, result) => {
+                if (error) throw error;
+                var appManager = require('./appmanager.js');
+                var id = result[0].id;
+                sql = `UPDATE ${responseTable} SET status = ${status} WHERE user_id = '${appManager.getOwner(openApp).id}' AND app_id = ${id} AND responses = '${openApp.responses.join('|')}'`;
+                connection.query(sql, (error, result) => {
+                    if (error) throw error;
+
+                    console.log('Status updated.');
+                });
+            });
+        });
     }
 }

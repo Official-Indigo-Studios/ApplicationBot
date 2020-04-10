@@ -14,8 +14,10 @@ module.exports = {
                 channel = message.guild.channels.cache.get(channel);
                 if (channel != undefined) {
                     var announcement = args.join(' ');
-                    announcement = '@everyone\n' + announcement;
-                    channel.send(announcement);
+                    var embed = new discord.MessageEmbed()
+                        .setColor('#cc33ff')
+                        .setDescription(announcement);
+                    channel.send(embed);
                 } else {
                     message.reply(`Invalid channel ${channelID} supplied!`);
                 }
