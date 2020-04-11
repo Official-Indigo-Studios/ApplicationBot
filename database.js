@@ -16,7 +16,9 @@ module.exports = {
                 if (err) throw err;
 
                 var appManager = require('./appmanager.js');
-                var { client } = require('./index.js');
+                var { client, discord } = require('./index.js');
+                // loading in the apps
+                var ids = new discord.Collection();
                 result.forEach((value) => {
                     var isTicket;
                     if (value.is_ticket) {
@@ -24,7 +26,28 @@ module.exports = {
                     }
                     var channel = client.channels.cache.get(value.channel_id);
                     var questions = value.questions.split('|');
-                    appManager.buildApp(value.name, channel, questions, isTicket, false);
+                    var app = appManager.buildApp(value.name, channel, questions, isTicket, false);
+                    ids.set(value.id, app);
+                });
+
+                sql = `SELECT * FROM ${responseTable} WHERE status = 0 OR status = 1`;
+                // loading in application responses
+                connection.query(sql, (error, result2) => {
+                    if (error) throw error;
+
+                    result2.forEach((value) => {
+                        var applicant = client.users.cache.get(value.user_id);
+                        var responses = value.responses.split('|');
+                        var app = ids.get(value.app_id);
+                        var isTicket = false;
+                        if (app.type === 'ticket') {
+                            isTicket = true;
+                        }
+                        appManager.startApp(applicant, app);
+                        responses.forEach(value => {
+                            appManager.addResponse(applicant, isTicket, value);
+                        });
+                    });
                 });
             });
         });
@@ -134,6 +157,11 @@ module.exports = {
 
                     console.log('Status updated.');
                 });
+                // app was accepted or denied, remove from open apps
+                // would prefer to do this in app manager but if I do, runs before sql stuff, leaving this method with an undefined open app
+                if (isTicket != 1 && (status !== 0 || status !== 1)) {
+                    appManager.closeApp(openApp);
+                }
             });
         });
     }

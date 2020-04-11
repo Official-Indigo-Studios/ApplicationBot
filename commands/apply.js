@@ -22,6 +22,8 @@ module.exports = {
                 } else {
                     message.reply(`I could not find an application matching ${args[0]}`);
                 }
+            } else {
+                message.reply('you already have an app open!');
             }
         }
     }

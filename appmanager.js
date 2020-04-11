@@ -130,13 +130,6 @@ module.exports = {
                             applicant.send(`Unfortunately, your application **${openApp.app.name}** has been denied.`)
                                 .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
                         }
-                        
-                        //TODO: find out why this runs before the db stuff and makes the app be undefined for db
-                        if (openApp.app.type === 'ticket') {
-                            client.ticketResponses.delete(applicant);
-                        } else {
-                            client.responses.delete(applicant);
-                        }
                     });
                 });
             } else {
@@ -181,6 +174,10 @@ module.exports = {
         client.ticketResponses.delete(applicant);
     },
 
+    closeApp(app) {
+        client.responses.delete(this.getOwner(app));
+    },
+
     buildApp(name, submissionChannel, questions, isTicket, addToDB) {
         var app = {
             name: name,
@@ -201,6 +198,7 @@ module.exports = {
         if (addToDB) {
             database.add(app);
         }
+        return app;
     },
 
     deleteApp(app, fromDB) {
