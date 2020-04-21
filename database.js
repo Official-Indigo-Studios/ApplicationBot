@@ -62,7 +62,7 @@ module.exports = {
                 isTicket = 1;
             }
             var questions = app.questions.join('|');
-            var sql = `INSERT INTO ${appTable} (name, channel_id, questions, is_ticket, guild_id) VALUES ('${app.name}', ${app.submission_channel.id}, '${questions}', ${isTicket}, ${app.submission_channel.guild.id})`;
+            var sql = `INSERT INTO ${appTable} (name, channel_id, questions, is_ticket, guild_id) VALUES (${connection.escape(app.name)}, ${app.submission_channel.id}, ${connection.escape(questions)}, ${isTicket}, ${app.submission_channel.guild.id})`;
             connection.query(sql, (err, result) => {
                 if (err) throw err;
 
@@ -102,12 +102,13 @@ module.exports = {
             if (response.app.type === 'ticket') {
                 isTicket = 1;
             }
-            var sql = `SELECT id FROM ${appTable} WHERE name = '${response.app.name}' AND channel_id = '${response.app.submission_channel.id}' AND is_ticket = ${isTicket}`;
+            var sql = `SELECT id FROM ${appTable} WHERE name = ${connection.escape(response.app.name)} AND channel_id = '${response.app.submission_channel.id}' AND is_ticket = ${isTicket}`;
             connection.query(sql, (error, result) => {
                 if (error) throw error;
 
                 var appID = result[0].id;
-                sql = `INSERT INTO ${responseTable} (user_id, app_id, responses, status) VALUES ('${applicantID}', ${appID}, '${responses}', ${status})`;
+                sql = `INSERT INTO ${responseTable} (user_id, app_id, status, responses) VALUES ('${applicantID}', ${appID}, ${status}, ${connection.escape(responses)})`;
+                console.log(sql);
                 connection.query(sql, (error, result) => {
                     if (error) throw error;
 
