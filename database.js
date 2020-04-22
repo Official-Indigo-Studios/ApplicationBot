@@ -44,8 +44,11 @@ module.exports = {
                             isTicket = true;
                         }
                         appManager.startApp(applicant, app);
-                        responses.forEach(value => {
-                            appManager.addResponse(applicant, isTicket, value);
+                        responses.forEach((value2) => {
+                            appManager.addResponse(applicant, isTicket, value2);
+                            if (appManager.numResponsesNeeded(applicant, isTicket) === 0) {
+                                appManager.finishApp(applicant, true, isTicket, false);
+                            }
                         });
                     });
                 });

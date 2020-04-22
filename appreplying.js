@@ -17,7 +17,7 @@ module.exports = {
         if (openApp != null) {
             // Cancel the application
             if (message.content.startsWith(config.prefix + 'cancel')) {
-                appManager.finishApp(applicant, false, isTicket);
+                appManager.finishApp(applicant, false, isTicket, true);
                 message.reply('I\'ve cancelled your application!');
             } else { 
                 // Record reply
@@ -25,7 +25,7 @@ module.exports = {
                 var numNeeded = appManager.numResponsesNeeded(applicant, isTicket);
                 // Answered all the questions, wrap up application
                 if (numNeeded == 0) {
-                    appManager.finishApp(applicant, true, isTicket);
+                    appManager.finishApp(applicant, true, isTicket, true);
                     message.reply('I\'ve submitted your app. Good luck!');
                 } else {
                     // Ask the next question

@@ -4,6 +4,8 @@ const database = require('./database.js');
 client.apps = new discord.Collection();
 // Maps a Discord user to their app response. They can only work on one app at a time
 client.responses = new discord.Collection();
+// Maps a Discord user to all of their cached finished apps (no response from admin, accepted, or denied)
+client.finishedApps = new discord.Collection();
 client.ticketResponses = new discord.Collection();
 
 module.exports = {
@@ -32,6 +34,11 @@ module.exports = {
         } else {
             return client.ticketResponses.get(user);
         }
+    },
+
+    getFinishedApp(user, application) {
+        var userApps = client.finishedApps.get(user);
+        return userApps.find(value => value.app === application);
     },
 
     getOwner(application) {
@@ -76,12 +83,14 @@ module.exports = {
         if (application.type != 'ticket') {
             client.responses.set(applicant, {
                 app: application,
-                responses: []
+                responses: [],
+                status: 0
             });
         } else { // Ticket
             client.ticketResponses.set(applicant, {
                 app: application,
                 responses: [],
+                status: 0
             });
         }
     },
@@ -105,67 +114,82 @@ module.exports = {
         return questionAmount - responseAmount;
     },
 
-    finishApp(applicant, sendIn, isTicket) {
+    finishApp(applicant, sendIn, isTicket, toDB) {
         if (sendIn) {
             var openApp = this.getOpenApp(applicant, isTicket);
-            database.saveResponses(openApp, 1);
-            if (!isTicket) {
-                var formattedResponses = openApp.responses.map((value, index) => {
-                    return `**${openApp.app.questions[index]}**: ${value}`;
-                });
-                formattedResponses.unshift(`**Discord**: ${this.getOwner(openApp)}`);
-                openApp.app.submission_channel.send(formattedResponses).then(message => {
-                    var filter = (reaction, user) => {
-                        return reaction.emoji.name === '✅' || reaction.emoji.name === '❌';
-                    }
-                    message.awaitReactions(filter, {max: 1}).then(collected => {
-                        var emoji = collected.first().emoji.name;
-                        var dbApp = openApp;
-                        if (emoji === '✅') {
-                            database.setResponseStatus(dbApp, 2);
-                            applicant.send(`Congratulations, your application **${openApp.app.name}** has been accepted! Please contact an appropriate user to continue.`)
-                                .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
-                        } else {
-                            database.setResponseStatus(dbApp, 3);
-                            applicant.send(`Unfortunately, your application **${openApp.app.name}** has been denied.`)
-                                .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
-                        }
-                    });
-                });
+            openApp.status = 1;
+            // If user already has some completed apps, add to the array. Otherwise, initialise an array
+            if (client.finishedApps.has(applicant)) {
+                var appsArray = client.finishedApps.get(applicant);
+                appsArray.push(openApp);
+                client.finishedApps.set(applicant, appsArray);
             } else {
-                var id = client.ticketResponses.reduce((accumulator, currentValue) => {
-                    if (currentValue.id != undefined) {
-                        if (accumulator < currentValue.id) {
-                            return currentValue.id;
-                        }
-                    } else {
-                        return accumulator;
-                    }
-                }, -1);
-                id = id + 1;
-                var perms;
-                if (openApp.app.roles != undefined) {
-                    perms = openApp.app.roles.map((value) => {
-                        return {id: value.id,
-                                allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
-                                }
-                    });
-                }
-                var channel = openApp.app.submission_channel.guild.channels.create(`${id}`, {
-                    parent: openApp.app.submission_channel,
-                    permissionOverwrites: perms
-                });
-                channel.then((channel) => {
-                    openApp.channel = channel;
-                    openApp.id = id;
+                client.finishedApps.set(applicant, [openApp]);
+            }
+            if (toDB) {
+                database.saveResponses(openApp, 1);
+            
+                if (!isTicket) {
                     var formattedResponses = openApp.responses.map((value, index) => {
                         return `**${openApp.app.questions[index]}**: ${value}`;
                     });
                     formattedResponses.unshift(`**Discord**: ${this.getOwner(openApp)}`);
-                    channel.send(formattedResponses);
-                });
+                    openApp.app.submission_channel.send(formattedResponses).then(message => {
+                        var filter = (reaction, user) => {
+                            return reaction.emoji.name === '✅' || reaction.emoji.name === '❌';
+                        }
+                        message.awaitReactions(filter, {max: 1}).then(collected => {
+                            var emoji = collected.first().emoji.name;
+                            var dbApp = openApp;
+                            if (emoji === '✅') {
+                                openApp.status = 2;
+                                database.setResponseStatus(dbApp, 2);
+                                applicant.send(`Congratulations, your application **${openApp.app.name}** has been accepted! Please contact an appropriate user to continue.`)
+                                    .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
+                            } else {
+                                openApp.status = 3;
+                                database.setResponseStatus(dbApp, 3);
+                                applicant.send(`Unfortunately, your application **${openApp.app.name}** has been denied.`)
+                                    .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
+                            }
+                        });
+                    });
+                } else {
+                    var id = client.ticketResponses.reduce((accumulator, currentValue) => {
+                        if (currentValue.id != undefined) {
+                            if (accumulator < currentValue.id) {
+                                return currentValue.id;
+                            }
+                        } else {
+                            return accumulator;
+                        }
+                    }, -1);
+                    id = id + 1;
+                    var perms;
+                    if (openApp.app.roles != undefined) {
+                        perms = openApp.app.roles.map((value) => {
+                            return {id: value.id,
+                                    allow: ['VIEW_CHANNEL', 'SEND_MESSAGES']
+                                    }
+                        });
+                    }
+                    var channel = openApp.app.submission_channel.guild.channels.create(`${id}`, {
+                        parent: openApp.app.submission_channel,
+                        permissionOverwrites: perms
+                    });
+                    channel.then((channel) => {
+                        openApp.channel = channel;
+                        openApp.id = id;
+                        var formattedResponses = openApp.responses.map((value, index) => {
+                            return `**${openApp.app.questions[index]}**: ${value}`;
+                        });
+                        formattedResponses.unshift(`**Discord**: ${this.getOwner(openApp)}`);
+                        channel.send(formattedResponses);
+                    });
+                }
             }
         }
+        client.responses.delete(applicant);
     },
 
     closeTicket(ticket) {
