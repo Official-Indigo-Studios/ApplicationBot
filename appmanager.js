@@ -37,8 +37,10 @@ module.exports = {
     },
 
     getFinishedApp(user, application) {
-        var userApps = client.finishedApps.get(user);
-        return userApps.find(value => value.app === application);
+        if (client.finishedApps.has(user)) {
+            var userApps = client.finishedApps.get(user);
+            return userApps.find(value => value.app === application);
+        }
     },
 
     getOwner(application) {
@@ -127,7 +129,7 @@ module.exports = {
                 client.finishedApps.set(applicant, [openApp]);
             }
             if (toDB) {
-                database.saveResponses(openApp, 1);
+                database.saveResponses(applicant, openApp, 1);
             
                 if (!isTicket) {
                     var formattedResponses = openApp.responses.map((value, index) => {
@@ -143,17 +145,18 @@ module.exports = {
                             var dbApp = openApp;
                             if (emoji === '✅') {
                                 openApp.status = 2;
-                                database.setResponseStatus(dbApp, 2);
+                                database.setResponseStatus(applicant, dbApp, 2);
                                 applicant.send(`Congratulations, your application **${openApp.app.name}** has been accepted! Please contact an appropriate user to continue.`)
                                     .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
                             } else {
                                 openApp.status = 3;
-                                database.setResponseStatus(dbApp, 3);
+                                database.setResponseStatus(applicant, dbApp, 3);
                                 applicant.send(`Unfortunately, your application **${openApp.app.name}** has been denied.`)
                                     .catch(() => collected.first().message.channel.send('Couldn\'t send message to user; they likely have their DMs off'));
                             }
                         });
                     });
+                    client.responses.delete(applicant);
                 } else {
                     var id = client.ticketResponses.reduce((accumulator, currentValue) => {
                         if (currentValue.id != undefined) {
@@ -183,23 +186,29 @@ module.exports = {
                         var formattedResponses = openApp.responses.map((value, index) => {
                             return `**${openApp.app.questions[index]}**: ${value}`;
                         });
-                        formattedResponses.unshift(`**Discord**: ${this.getOwner(openApp)}`);
+                        formattedResponses.unshift(`**Discord**: ${applicant}`);
                         channel.send(formattedResponses);
                     });
+                    client.ticketResponses.delete(applicant);
                 }
             }
         }
-        client.responses.delete(applicant);
+        //client.responses.delete(applicant);
+        //client.ticketResponses.delete(applicant);
     },
 
     closeTicket(ticket) {
         ticket.channel.delete();
         var applicant = this.getOwner(ticket);
         client.ticketResponses.delete(applicant);
+        database.setResponseStatus(applicant, ticket, 2);
     },
 
     closeApp(app) {
-        client.responses.delete(this.getOwner(app));
+        var owner = client.finishedApps.findKey(array => array.indexOf(app) > -1);
+        var apps = client.finishedApps.get(owner);
+        var index = apps.indexOf(app);
+        apps.splice(index, 1);
     },
 
     buildApp(name, submissionChannel, questions, isTicket, addToDB) {

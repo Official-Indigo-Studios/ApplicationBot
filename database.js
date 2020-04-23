@@ -91,15 +91,17 @@ module.exports = {
         });
     },
 
-    saveResponses(response, status) {
+    saveResponses(applicant, response, status) {
         var connection = mysql.createConnection(config.database);
+        //var appManager = require('./appmanager.js');
+        var applicantID = applicant.id;
         connection.connect((error) => {
             if (error) throw error;
 
-            var appManager = require('./appmanager.js');
-            var { client } = require('./index.js');
+            //var appManager = require('./appmanager.js');
+            //var { client } = require('./index.js');
 
-            var applicantID = appManager.getOwner(response).id;
+            //var applicantID = appManager.getOwner(response).id;
             var responses = response.responses.join('|');
             var isTicket = 0;
             if (response.app.type === 'ticket') {
@@ -141,7 +143,7 @@ module.exports = {
         });
     },
 
-    setResponseStatus(openApp, status) {
+    setResponseStatus(applicant, openApp, status) {
         var connection = mysql.createConnection(config.database);
         connection.connect((error) => {
             if (error) throw error;
@@ -150,12 +152,12 @@ module.exports = {
             if (openApp.app.type === 'ticket') {
                 isTicket = 1;
             }
-            var sql = `SELECT id FROM ${appTable} WHERE name = '${openApp.app.name}' AND channel_id = '${openApp.app.submission_channel.id}' AND is_ticket = ${isTicket}`;
+            var sql = `SELECT id FROM ${appTable} WHERE name = ${connection.escape(openApp.app.name)} AND channel_id = '${openApp.app.submission_channel.id}' AND is_ticket = ${isTicket}`;
             connection.query(sql, (error, result) => {
                 if (error) throw error;
                 var appManager = require('./appmanager.js');
                 var id = result[0].id;
-                sql = `UPDATE ${responseTable} SET status = ${status} WHERE user_id = '${appManager.getOwner(openApp).id}' AND app_id = ${id} AND responses = '${openApp.responses.join('|')}'`;
+                sql = `UPDATE ${responseTable} SET status = ${status} WHERE user_id = '${applicant.id}' AND app_id = ${id} AND responses = '${openApp.responses.join('|')}'`;
                 connection.query(sql, (error, result) => {
                     if (error) throw error;
 

@@ -8,8 +8,8 @@ module.exports = {
 
     execute(message, args) {
         if (args.length > 0) {
-            if (appManager.getOpenApp(message.author, true) == null && appManager.getOpenApp(message.author, false) == null) {
-                var app = appManager.getApp(message.channel.guild, args[0], false);
+            var app = appManager.getApp(message.channel.guild, args[0], false);
+            if (appManager.getOpenApp(message.author, true) == null && appManager.getOpenApp(message.author, false) == null && appManager.getFinishedApp(message.author, app) == null) {
                 if (app != undefined) {
                     // if appName is a valid application...
                     message.author.send(`Hello! You will respond to the application questions for ${args[0]} here. Answer to the best of your abilities.\nQuestion 1: ${app.questions[0]}`)

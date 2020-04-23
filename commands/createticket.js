@@ -31,7 +31,6 @@ module.exports = {
             var channel = message.guild.channels.cache.get(categoryID);
             if (channel == undefined) {
                 channel = message.guild.channels.cache.find((channel) => {
-                    console.log(channel.name);
                     return channel instanceof discord.CategoryChannel && channel.name === categoryID;
                 });
             }
